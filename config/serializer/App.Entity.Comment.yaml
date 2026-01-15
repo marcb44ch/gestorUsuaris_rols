@@ -1,0 +1,5 @@
+# config/serializer/App.Entity.Comment.yaml
+App\Entity\Comment:
+    attributes:
+        contingut:
+            groups: ['project:read']

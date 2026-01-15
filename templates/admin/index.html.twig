@@ -1,0 +1,17 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block body %}
+    <h2>Panell de Control</h2>
+    <p>Benvingut administrador. Aquí tens accés total.</p>
+    
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Gestió de Projectes</h5>
+                    <a href="{{ path('app_project_index') }}" class="btn btn-primary">Anar-hi</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

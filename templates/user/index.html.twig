@@ -1,0 +1,91 @@
+{% extends is_granted('ROLE_ADMIN') ? 'admin/layout.html.twig' : 'base.html.twig' %}
+
+{% block title %}Usuaris{% endblock %}
+
+{% block body %}
+    <h1>Usuaris</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Email</th>
+                <th>Roles</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for user in users %}
+            <tr>
+                <td>{{ user.id }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.roles ? user.roles|json_encode : '' }}</td>
+                <td>
+                    <a href="{{ path('app_user_show', {'id': user.id}) }}">show</a>
+                    
+                    {# 1. Afegim una classe especial i mantenim el href #}
+                    <a href="{{ path('app_user_edit', {'id': user.id}) }}" class="btn-edit-modal">edit</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="4">no records found</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <a href="{{ path('app_user_new') }}">Create new</a>
+
+    {# 2. Afegeix el contenidor del Modal al final del block body #}
+    <div class="modal fade" id="userEditModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content" id="userEditModalContent">
+                </div>
+        </div>
+    </div>
+
+    {# 3. Script per gestionar l'obertura del modal #}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const modalElement = document.getElementById('userEditModal');
+            
+            // Comprova si Bootstrap està carregat
+            if (typeof bootstrap === 'undefined') {
+                console.error('Bootstrap no està carregat!');
+                return;
+            }
+            
+            const modal = new bootstrap.Modal(modalElement);
+    
+            document.querySelectorAll('.btn-edit-modal').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    const url = this.getAttribute('href');
+                    console.log('Carregant URL:', url); // Debug
+                    
+                    fetch(url, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Error en la resposta: ' + response.status);
+                        }
+                        return response.text();
+                    })
+                    .then(html => {
+                        console.log('HTML rebut'); // Debug
+                        document.getElementById('userEditModalContent').innerHTML = html;
+                        modal.show();
+                    })
+                    .catch(error => {
+                        console.error('Error carregant el formulari:', error);
+                        alert('Error carregant el formulari');
+                    });
+                });
+            });
+        });
+    </script>
+{% endblock %}

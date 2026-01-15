@@ -1,0 +1,188 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Project{% endblock %}
+
+{% block body %}
+    <h1>Project</h1>
+
+    <table class="table">
+        <tbody>
+            <tr>
+                <th>Id</th>
+                <td>{{ project.id }}</td>
+            </tr>
+            <tr>
+                <th>Nombre</th>
+                <td>{{ project.nombre }}</td>
+            </tr>
+            <tr>
+                <th>Descripcion</th>
+                <td>{{ project.descripcion }}</td>
+            </tr>
+            <tr>
+                <th>Fecha_inicio</th>
+                <td>{{ project.fechaInicio ? project.fechaInicio|date('Y-m-d') : '' }}</td>
+            </tr>
+            <tr>
+                <th>Fecha_fin</th>
+                <td>{{ project.fechaFin ? project.fechaFin|date('Y-m-d') : '' }}</td>
+            </tr>
+            <tr>
+                <th>Estado</th>
+                <td>{{ project.estado }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <button class="btn btn-primary btn-back-to-list" data-href="{{ path('app_project_index') }}">Back to list</button>
+
+    <button class="btn btn-secondary btn-edit-modal" data-href="{{ path('app_project_edit', {'id': project.id}) }}">Edit</button>
+    
+    <br></br>
+    {{ include('project/_delete_form.html.twig') }}
+    
+    <br>
+    <div>
+        <h2>Comentaris</h2>
+        
+        <br>
+
+        <table>
+            <thead>
+            <tr>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for comment in comments %}
+                <tr>
+                <td><strong>{{ comment.author.email }}</strong></td>
+                <td> {{ comment.contingut }} </td>
+                <td> {{ comment.dataCreacio|date('d/m/Y') }} </td>
+                <td>
+                    {% if comment.author.id == app.user.id %}
+                        <button class="btn btn-danger btn-delete-comment" 
+                                data-href="{{ path('app_comment_delete', {'id': comment.id}) }}"
+                                data-token="{{ csrf_token('delete' ~ comment.id) }}">
+                            Eliminar
+                        </button>
+                    {% endif %}
+                </td>
+                </tr>
+            {% else %}
+                <tr>
+                <td colspan="3">No hi ha comentaris per aquest projecte.</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <hr>
+        <h3>Afegir un comentari</h3>
+        {{ form_start(commentForm) }}
+            {{ form_widget(commentForm) }}
+        {{ form_end(commentForm) }}
+    </div>
+
+    {# 2. Afegeix el contenidor del Modal al final del block body #}
+    <div class="modal fade" id="projectEditModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content" id="projectEditModalContent">
+                </div>
+        </div>
+    </div>
+
+    {# 3. Script per gestionar l'obertura del modal #}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const modalElement = document.getElementById('projectEditModal');
+            
+            // Comprova si Bootstrap està carregat
+            if (typeof bootstrap === 'undefined') {
+                console.error('Bootstrap no està carregat!');
+                return;
+            }
+            
+            const modal = new bootstrap.Modal(modalElement);
+
+            document.querySelectorAll('.btn-edit-modal').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    const url = this.getAttribute('href') || this.dataset.href || this.getAttribute('data-href');
+                    
+                    fetch(url, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Error en la resposta: ' + response.status);
+                        }
+                        return response.text();
+                    })
+                    .then(html => {
+                        console.log('HTML rebut'); // Debug
+                        document.getElementById('projectEditModalContent').innerHTML = html;
+                        modal.show();
+                    })
+                    .catch(error => {
+                        console.error('Error carregant el formulari:', error);
+                        alert('Error carregant el formulari');
+                    });
+                });
+            });
+
+            // Handler per als buttons que fan navigació a una URL guardada en data-href
+            document.querySelectorAll('.btn-back-to-list').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const url = this.getAttribute('href') || this.dataset.href || this.getAttribute('data-href');
+                    if (!url) return;
+                    window.location.href = url;
+                });
+            });
+
+            // Handler per eliminar comentaris
+            document.querySelectorAll('.btn-delete-comment').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    if (confirm('Estàs segur que vols eliminar aquest comentari?')) {
+                        const url = this.dataset.href;
+                        const token = this.dataset.token; // Agafem el token directament del botó
+                        
+                        fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            body: '_token=' + encodeURIComponent(token)
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Error en la resposta: ' + response.status);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.success) {
+                                this.closest('tr').remove();
+                                alert('Comentari eliminat correctament');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error eliminant el comentari:', error);
+                            alert('Error eliminant el comentari');
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}

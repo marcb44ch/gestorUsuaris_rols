@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Comentari{% endblock %}
+
+{% block body %}
+    <h1>Afegir comntari</h1>
+
+    {{ include('coment/_form.html.twig') }}
+
+    <a href="{{ path('app_coment_index') }}">back to list</a>
+{% endblock %}

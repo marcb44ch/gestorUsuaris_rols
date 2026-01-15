@@ -1,0 +1,97 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}User{% endblock %}
+
+{% block body %}
+    <h1>User</h1>
+
+    <table class="table">
+        <tbody>
+            <tr>
+                <th>Id</th>
+                <td>{{ user.id }}</td>
+            </tr>
+            <tr>
+                <th>Email</th>
+                <td>{{ user.email }}</td>
+            </tr>
+            <tr>
+                <th>Roles</th>
+                <td>{{ user.roles ? user.roles|json_encode : '' }}</td>
+            </tr>
+            <tr>
+                <th>Password</th>
+                <td>{{ user.password }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <button class="btn btn-primary btn-back-to-list" data-href="{{ path('app_user_index') }}">Back to list</button>
+
+    <button class="btn btn-secondary btn-edit-modal" data-href="{{ path('app_user_edit', {'id': user.id}) }}">Edit</button>
+
+    {{ include('user/_delete_form.html.twig') }}
+
+    {# 2. Afegeix el contenidor del Modal al final del block body #}
+    <div class="modal fade" id="userEditModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content" id="userEditModalContent">
+                </div>
+        </div>
+    </div>
+
+    {# 3. Script per gestionar l'obertura del modal #}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const modalElement = document.getElementById('userEditModal');
+            
+            // Comprova si Bootstrap està carregat
+            if (typeof bootstrap === 'undefined') {
+                console.error('Bootstrap no està carregat!');
+                return;
+            }
+            
+            const modal = new bootstrap.Modal(modalElement);
+
+            document.querySelectorAll('.btn-edit-modal').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    const url = this.getAttribute('href') || this.dataset.href || this.getAttribute('data-href');
+                    
+                    fetch(url, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Error en la resposta: ' + response.status);
+                        }
+                        return response.text();
+                    })
+                    .then(html => {
+                        console.log('HTML rebut'); // Debug
+                        document.getElementById('userEditModalContent').innerHTML = html;
+                        modal.show();
+                    })
+                    .catch(error => {
+                        console.error('Error carregant el formulari:', error);
+                        alert('Error carregant el formulari');
+                    });
+                });
+            });
+
+            // Handler per als buttons que fan navigació a una URL guardada en data-href
+            document.querySelectorAll('.btn-back-to-list').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const url = this.getAttribute('href') || this.dataset.href || this.getAttribute('data-href');
+                    if (!url) return;
+                    window.location.href = url;
+                });
+            });
+        });
+    </script>
+    
+{% endblock %}

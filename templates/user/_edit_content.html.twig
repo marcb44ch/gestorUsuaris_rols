@@ -1,0 +1,24 @@
+{# templates/user/_edit_content.html.twig #}
+
+{# L'atribut action és important perquè s'enviï a la ruta correcta #}
+<form action="{{ path('app_user_edit', {'id': user.id}) }}" method="post" id="edit-user-form">
+    
+    <div class="modal-header">
+        <h5 class="modal-title">Editar Usuari</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+    
+    <div class="modal-body">
+        {# Renderitzem el formulari que ja tenies #}
+        {{ form_widget(form) }}
+        
+        {# Important: el token CSRF i altres camps ocults #}
+        {{ form_rest(form) }}
+    </div>
+    
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tancar</button>
+        <button type="submit" class="btn btn-primary">Guardar Canvis</button>
+    </div>
+
+</form>

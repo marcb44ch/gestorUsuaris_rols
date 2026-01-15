@@ -1,0 +1,19 @@
+App\Entity\Project:
+    # Definim les operacions (GetCollection = llista, Get = un sol projecte)
+    operations:
+        ApiPlatform\Metadata\GetCollection: ~
+        ApiPlatform\Metadata\Post: ~
+        ApiPlatform\Metadata\Get: ~
+        ApiPlatform\Metadata\Put: ~
+        ApiPlatform\Metadata\Patch: ~
+        ApiPlatform\Metadata\Delete: ~
+
+    # Configuració global per evitar el bucle infinit
+    normalizationContext:
+        groups: ['project:read']
+
+App\Entity\Comment:
+    properties:
+        text:
+            groups: ['project:read']
+        # IMPORTANT: No posem 'project' aquí per tallar el bucle

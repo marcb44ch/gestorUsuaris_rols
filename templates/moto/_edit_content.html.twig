@@ -1,0 +1,23 @@
+{# templates/moto/_edit_content.html.twig #}
+
+<form action="{{ path('app_moto_edit', {'id': moto.id}) }}" method="post" id="edit-moto-form">
+    
+    <div class="modal-header">
+        <h5 class="modal-title">Editar Moto</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+    
+    <div class="modal-body">
+        {# Renderitzem el formulari que ja tenies #}
+        {{ form_widget(form) }}
+        
+        {# Important: el token CSRF i altres camps ocults #}
+        {{ form_rest(form) }}
+    </div>
+    
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tancar</button>
+        <button type="submit" class="btn btn-primary">Guardar Canvis</button>
+    </div>
+
+</form>

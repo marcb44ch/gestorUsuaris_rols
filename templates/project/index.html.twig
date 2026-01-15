@@ -1,0 +1,214 @@
+{% extends is_granted('ROLE_ADMIN') ? 'admin/layout.html.twig' : 'base.html.twig' %}
+
+{% block title %}Llistat de Projectes{% endblock %}
+
+{% block body %}
+    <h1>Llistat de Projectes</h1>
+
+    <form action="{{ path('app_project_index') }}" method="get" class="mb-3">
+        <div class="input-group">
+            <input type="search" name="q" class="form-control" placeholder="Buscar per nom o descripció..." value="{{ app.request.query.get('q') }}">
+            <button class="btn btn-outline-secondary" type="submit">Buscar</button>
+            {% if app.request.query.get('q') %}
+                <a href="{{ path('app_project_index') }}" class="btn btn-outline-danger">Netejar</a>
+            {% endif %}
+        </div>
+    </form>
+
+    <h4>Filtres</h4>
+    <form>
+        <div>
+            <table>
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        {# ------------------ STATUS ------------------ #}
+                        <td>Estat</td>
+                        <td>
+                            {# Eliminem l'atribut 'value' del select, no fa res #}
+                            <select name="status" id="setstatus" class="form-select">
+                                <option value="" disabled {{ not app.request.query.get('status') ? 'selected' : '' }} hidden>Escull una opció</option>
+                                
+                                <option value="pendiente" {{ app.request.query.get('status') == 'pendiente' ? 'selected' : '' }}>
+                                    Pendiente
+                                </option>
+                                
+                                <option value="en_progreso" {{ app.request.query.get('status') == 'en_progreso' ? 'selected' : '' }}>
+                                    En progreso
+                                </option>
+                                
+                                <option value="finalizado" {{ app.request.query.get('status') == 'finalizado' ? 'selected' : '' }}>
+                                    Finalizado
+                                </option>
+                            </select>
+                        </td>
+                        <td>
+                            {# <button class="btn btn-outline-secondary" type="submit">Filtrar</button> #}
+                        
+                            {% if app.request.query.get('status') %}
+                                {# Aquest botó neteja TOTS els filtres #}
+                                <a href="{{ path('app_project_index', app.request.query.all|merge({'status': null})) }}" class="btn btn-outline-danger">Netejar</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        {# ------------------ DATE RANGE INICI------------------ #}
+                        <td>Rang de dates d'inici</td>
+                        <td><input type="date" name="range1" id="setRange1" value="{{ app.request.query.get('range1') }}"></input></td>
+                        <td><input type="date" name="range2" id="setRange2" value="{{ app.request.query.get('range2') }}"></input></td>
+                        {# <td><button class="btn btn-outline-secondary" type="submit" value="Enviar">Filtrar</button></td> #}
+                        <td>
+                            {% if app.request.query.get('range1') and app.request.query.get('range2') %}
+                                <a href="{{ path('app_project_index', app.request.query.all|merge({'range1': null, 'range2': null})) }}" class="btn btn-outline-danger">Netejar</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        {# ------------------ DATE RANGE FINAL ------------------ #}
+                        <td>Rang de dates projecte acabat</td>
+                        <td><input type="date" name="range3" id="setRange3" value="{{ app.request.query.get('range3') }}"></input></td>
+                        <td><input type="date" name="range4" id="setRange4" value="{{ app.request.query.get('range4') }}"></input></td>
+                        {#<td><button class="btn btn-outline-secondary" type="submit" value="Enviar">Filtrar</button></td> #}
+                        <td>
+                            {% if app.request.query.get('range4') and app.request.query.get('range4') %}
+                                <a href="{{ path('app_project_index', app.request.query.all|merge({'range3': null, 'range4': null})) }}" class="btn btn-outline-danger">Netejar</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            {# ------------------ FILTRAR ------------------ #}
+                            <button class="btn btn-outline-secondary" type="submit" value="Enviar">Filtrar</button>
+                            {# ------------------ NATEJAR FILTRE ------------------ #}
+                            <a href="{{ path('app_project_index') }}" class="btn btn-outline-danger">Netejar</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </form>
+
+    <br>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Titol</th>
+                <th>Descripció</th>
+                <th>Data d'inici</th>
+                <th>Data fi</th>
+                <th>Accions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for project in projects %}
+                <tr>
+                    <td>{{ project.id }}</td>
+                    <td>{{ project.nombre }}</td>
+                    <td>{{ project.descripcion }}</td>
+                    <td>{{ project.fechaInicio ? project.fechaInicio|date('d/m/Y') : ''}}</td>
+                    <td>{{ project.fechaFin ? project.fechaFin|date('d/m/Y') : '' }}</td>
+                    <td>
+                        <button class="btn btn-primary btn-navigate" data-href="{{ path('app_project_show', {'id': project.id}) }}">Show</button>
+
+                        {# AQUI ESTÀ LA CLAU: Només mostrem 'Editar' si és ADMIN #}
+                        {% if is_granted('ROLE_ADMIN') %}
+                            <button class="btn btn-secondary btn-edit-modal" data-href="{{ path('app_project_edit', {'id': project.id}) }}">Edit</button>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="6">No s'han trobat registres</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {# Només l'ADMIN veu el botó de crear nou #}
+    {% if is_granted('ROLE_ADMIN') %}
+        <a href="{{ path('app_project_new') }}" class="btn btn-primary">Crear nou</a>
+    {% endif %}
+    
+    
+    {# 2. Afegeix el contenidor del Modal al final del block body #}
+    <div class="modal fade" id="projectEditModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content" id="projectEditModalContent">
+                </div>
+        </div>
+    </div>
+
+    {# 3. Script per gestionar l'obertura del modal #}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const modalElement = document.getElementById('projectEditModal');
+            
+            // Comprova si Bootstrap està carregat
+            if (typeof bootstrap === 'undefined') {
+                console.error('Bootstrap no està carregat!');
+                return;
+            }
+            
+            const modal = new bootstrap.Modal(modalElement);
+
+            document.querySelectorAll('.btn-edit-modal').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    const url = this.getAttribute('href') || this.dataset.href || this.getAttribute('data-href');
+                    console.log('Carregant URL:', url); // Debug
+                    
+                    fetch(url, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Error en la resposta: ' + response.status);
+                        }
+                        return response.text();
+                    })
+                    .then(html => {
+                        console.log('HTML rebut'); // Debug
+                        document.getElementById('projectEditModalContent').innerHTML = html;
+                        modal.show();
+                    })
+                    .catch(error => {
+                        console.error('Error carregant el formulari:', error);
+                        alert('Error carregant el formulari');
+                    });
+                });
+            });
+            
+            // Handler per als buttons que fan navigació a una URL guardada en data-href
+            document.querySelectorAll('.btn-back-to-list').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const url = this.getAttribute('href') || this.dataset.href || this.getAttribute('data-href');
+                    if (!url) return;
+                    window.location.href = url;
+                });
+            });
+
+            // Handler general per als buttons que han de navegar a una URL
+            document.querySelectorAll('.btn-navigate').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const url = this.getAttribute('href') || this.dataset.href || this.getAttribute('data-href');
+                    if (!url) return;
+                    window.location.href = url;
+                });
+            });
+        });
+    </script>
+    
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends 'base.html.twig' %}
+
+{% block sidebar %}
+    <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse" style="min-height: 100vh;">
+        <div class="position-sticky pt-3">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link active" href="{{ path('app_admin_dashboard') }}">
+                        Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ path('app_project_index') }}">
+                        Gestió Projectes
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ path('app_user_index') }}">
+                        Gestió Usuaris
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ path('app_moto_index') }}">
+                        Gestió Motos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ path('app_projectApi_index') }}">
+                        Gestió Projectes Via API
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+{% endblock %}

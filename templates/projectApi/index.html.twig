@@ -1,0 +1,402 @@
+{% extends is_granted('ROLE_ADMIN') ? 'admin/layout.html.twig' : 'base.html.twig' %}
+
+{% block title %}Llistat de Projectes Carregats de l'API{% endblock %}
+
+{% block body %}
+<style>
+    /* El fons fosc que cobreix tota la pantalla */
+    .modal-overlay {
+        display: none; /* Ocult per defecte */
+        position: fixed; 
+        z-index: 1000; 
+        left: 0;
+        top: 0;
+        width: 100%; 
+        height: 100%; 
+        overflow: auto; 
+        background-color: rgba(0,0,0,0.5); /* Fons semitransparent */
+    }
+
+    /* La caixa blanca del modal */
+    .modal-content {
+        background-color: #fefefe;
+        margin: 10% auto; /* Centrat verticalment i horitzontalment */
+        padding: 20px;
+        border: 1px solid #888;
+        width: 50%; /* Amplada del modal */
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    /* Botó de tancar (la X) */
+    .close-modal {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .close-modal:hover,
+    .close-modal:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    /* Estils bàsics pel formulari */
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+    .form-group input, .form-group textarea { width: 100%; padding: 8px; box-sizing: border-box; }
+    .btn-save { background-color: #28a745; color: white; padding: 10px 20px; border: none; cursor: pointer; }
+
+    .loader {
+        text-align: center;
+        
+    }
+
+</style>
+    <div id="loader" class="text-center">
+        <div class="spinner-border" role="status"> <span class="visually-hidden">Carregant dades...</span>
+        </div>
+        <p>Connectant amb l'API...</p>
+    </div>
+
+    <div id="projects-container" class="container" style="display: none;">
+        <h1>Llistat de projectes Carregats de l'API</h1>
+        <br>
+
+        
+
+        <table class="table" id="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Títol</th>
+                    <th>Descripció</th>
+                    <th>Data d'inici</th>
+                    <th>Data fi</th>
+                    <th>Estat</th>
+                    <th>Accions</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+
+        <br>
+        <br>
+        {% if is_granted('ROLE_ADMIN')%}
+            <button class="btn btn-primary" id="addProject">Afegir projecte</button>
+        {% endif %}
+
+        {# ------------------ MODAL CREAR PROJECTE ------------------ #}
+        <div id="myModal" class="modal-overlay">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2>Nou Projecte</h2>
+                
+                <form id="projectForm">
+                    <div class="form-group">
+                        <label for="nombre">Nom del projecte:</label>
+                        <input type="text" id="nombre" name="nombre" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="descripcion">Descripció:</label>
+                        <textarea id="descripcion" name="descripcion" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="fecha_inicio">Data Inici:</label>
+                        <input type="date" id="fecha_inicio" name="fecha_inicio" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="fecha_fin">Data Fi:</label>
+                        <input type="date" id="fecha_fin" name="fecha_fin">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="estado">Estat:</label>
+                        <select name="status" id="status">
+                            <option value="" selected disabled>Selecciona un estat</option>
+                            <option value="pendiente">Pendiente</option>
+                            <option value="en_proceso">En proceso</option>
+                            <option value="finalizado">Finalizado</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn-save">Guardar Projecte</button>
+                </form>
+            </div>
+        </div>
+
+        {# ------------------ MODAL MODIFICAR ------------------ #}
+        <div id="modifyModal" class="modal-overlay">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2>Modificar projecte</h2>
+                
+                <form id="modifyProject">
+                    <div class="form-group">
+                        <label for="nombre">Nom del projecte:</label>
+                        <input type="text" id="name" name="nombre" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="descripcion">Descripció:</label>
+                        <textarea id="des" name="descripcion" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="fecha_inicio">Data Inici:</label>
+                        <input type="date" id="inDate" name="fecha_inicio" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="fecha_fin">Data Fi:</label>
+                        <input type="date" id="endDate" name="fecha_fin">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="estado">Estat:</label>
+                        <select name="status" id="currentStatus">
+                            <option value="" selected disabled>Selecciona un estat</option>
+                            <option value="pendiente">Pendiente</option>
+                            <option value="en_proceso">En proceso</option>
+                            <option value="completado">Finalizado</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn-update" id="update">Guardar canvis</button>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loader = document.getElementById('loader');
+            const container = document.getElementById('projects-container');
+            const url = '/api/projects';
+            
+            
+            // Fem la petició a l'API (Fetch)
+            fetch(url)
+                .then(response => {
+                    // Comprovem si la petició ha anat bé (codi 200)
+                    if (!response.ok) {
+                        throw new Error('Error a la xarxa o projecte no trobat');
+                    }
+                    return response.json(); // Convertim la resposta a objecte JS
+                })
+                
+                .then(data => {
+                    // Aquí tenim el JSON dins de la variable 'data'
+                    console.log(data); // Pots veure-ho a la consola del navegador
+                    
+                    const table = document.getElementById('table');
+                    
+                    for (project of data.member) {
+                        console.log(project)
+                        table.innerHTML += `
+                            <tr>
+                                <td>${project.id}</td>
+                                <td>${project.nombre}</td>
+                                <td>${project.descripcion}</td>
+                                <td>${new Date(project.fecha_inicio).toLocaleDateString()}</td>
+                                <td>${new Date(project.fecha_fin).toLocaleDateString()}</td>
+                                <td>${project.estado}</td>
+                                <td>
+                                    <button class="btn border-secondary modifyBtn" data-project-id="${project.id}">Modificar</button>
+                                    <button class="btn border-danger delBtn" data-project-id="${project.id}">Eliminar</button>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                    // Delegació d'esdeveniments: captura clicks als botons "Modificar" encara que s'hagin afegit dinàmicament
+                    document.getElementById('table').addEventListener('click', function(e) {
+                        if (e.target && e.target.classList.contains('modifyBtn')) {
+
+                            // Agafar les dades del projecte seleccionat
+                            const projectId = e.target.dataset.projectId;
+                            const project = data.member.find(p => p.id == projectId);
+
+                            // Agafar els inputs del formulari d'edició
+                            const name = document.getElementById('name');
+                            const description = document.getElementById('des');
+                            const initialDate = document.getElementById('inDate');
+                            const endDate = document.getElementById('endDate');
+                            const status = document.getElementById('currentStatus');
+
+                            // Obre el modal per editar
+                            document.getElementById('modifyModal').style.display = 'block';
+                            
+                            // Guardem l'ID al formulari per saber quin projecte estem editant
+                            document.getElementById('modifyProject').dataset.id = projectId;
+
+                            // Assignar els valors del projecte a editar
+                            name.value = project.nombre;
+                            description.value = project.descripcion;
+                            initialDate.value = project.fecha_inicio ? project.fecha_inicio.split('T')[0] : '';
+                            console.log(project.fecha_inicio)
+                            endDate.value = project.fecha_fin ? project.fecha_fin.split('T')[0] : '';
+                            status.value = project.estado;
+                        }
+                        if (e.target && e.target.classList.contains('delBtn')) {
+                            // (DELETE)
+                            if (confirm('Estàs segur que vols eliminar aquest projecte?')){
+                                const projectId = e.target.dataset.projectId;
+                                console.log(projectId);
+                                const delProject = document.getElementById('delProject');
+
+                                fetch('/api/projects/' + projectId, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Content-Type': 'application/ld+json'
+                                    },
+                                })
+                                .then(response => {
+                                    if (response.ok) {
+                                        location.reload();
+                                    } else {
+                                        alert('Error al guardar els canvis.');
+                                    }
+                                });
+                            }
+                        }
+                    });
+                    container.style.display = 'block';
+                    loader.style.display = 'none';
+                })
+                .catch(error => {
+                    // Gestió d'errors
+                    console.error('Hi ha hagut un problema:', error);
+                    document.getElementById('project-card').innerHTML = '<p style="color:red">Error carregant el projecte.</p>';
+                    container.style.display = 'block';
+                    loader.style.display = 'none';
+                });
+            
+            
+            const modal = document.getElementById("myModal");
+            const modifyMod = document.getElementById("modifyModal");
+            const btnOpen = document.getElementById("addProject");
+            const closeButtons = document.getElementsByClassName("close-modal");
+
+            // Obrir el modal quan es clica el botó
+            if (btnOpen) {
+                btnOpen.addEventListener('click', function() {
+                    modal.style.display = "block";
+                });
+            }
+
+            // Tancar qualsevol modal quan es clica la "X"
+            for (let i = 0; i < closeButtons.length; i++) {
+                closeButtons[i].addEventListener('click', function() {
+                    modal.style.display = "none";
+                    modifyMod.style.display = "none";
+                });
+            }
+
+            // Tancar el modal si es clica fora (al fons fosc)
+            window.addEventListener('click', function(event) {
+                if (event.target == modal) {
+                    modal.style.display = "none";
+                }
+                if (event.target == modifyMod) {
+                    modifyMod.style.display = "none";
+                }
+            });
+
+            // Capturar l'enviament del formulari per evitar que recarregui la pàgina
+            const form = document.getElementById('projectForm');
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Aquí anirà la lògica per enviar les dades a l'API (POST)
+                console.log("Formulari enviat! Ara cal fer el POST a l'API");
+                
+                // Dades exemple per agafar valors
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData.entries());
+                console.log(data);
+                postData("/api/projects", data)
+                
+                // Després d'enviar, tancaríem el modal:
+                modal.style.display = "none";
+                location.reload();
+            });
+
+            // Capturar l'enviament del formulari de modificació (PUT)
+            const modifyForm = document.getElementById('modifyProject');
+            modifyForm.addEventListener('submit', function(e) {
+                e.preventDefault(); // Evita la recàrrega de la pàgina
+                
+                const projectId = this.dataset.id;
+                const formData = new FormData(modifyForm);
+                const data = Object.fromEntries(formData.entries());
+
+                fetch('/api/projects/' + projectId, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/ld+json'
+                    },
+                    body: JSON.stringify({
+                        "nombre": data.nombre,
+                        "descripcion": data.descripcion,
+                        "fecha_inicio": data.fecha_inicio,
+                        "fecha_fin": data.fecha_fin ? data.fecha_fin : null,
+                        "estado": data.status
+                    })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        document.getElementById('modifyModal').style.display = "none";
+                        location.reload(); // Recarreguem per veure els canvis a la taula
+                    } else {
+                        alert('Error al guardar els canvis.');
+                    }
+                });
+            });
+
+            // API post function
+            async function postData(url, data) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/ld+json'
+                        },
+                        // body: JSON.stringify(data)
+                        body: JSON.stringify({
+                            "nombre": data.nombre,
+                            "descripcion": data.descripcion,
+                            "fecha_inicio": data.fecha_inicio,
+                            "fecha_fin": data.fecha_fin ? data.fecha_fin : null,
+                            "estado": data.status,
+                            "fechaInicio": data.fecha_inicio,
+                            "fechaFin": data.fecha_fin ? data.fecha_fin : null
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.log(errorText)
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const responseData = await response.json();
+                    console.log('Success:', responseData);
+                    return responseData;
+
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            }
+        });
+
+    </script>
+
+{% endblock %}

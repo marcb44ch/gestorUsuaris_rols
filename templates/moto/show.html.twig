@@ -1,0 +1,96 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Moto{% endblock %}
+
+{% block body %}
+    <h1>Moto</h1>
+
+    <table class="table">
+        <tbody>
+            <tr>
+                <th>Id</th>
+                <td>{{ moto.id }}</td>
+            </tr>
+            <tr>
+                <th>Marca</th>
+                <td>{{ moto.marca }}</td>
+            </tr>
+            <tr>
+                <th>Model</th>
+                <td>{{ moto.model }}</td>
+            </tr>
+            <tr>
+                <th>Km</th>
+                <td>{{ moto.km }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <button class="btn btn-primary btn-back-to-list" data-href="{{ path('app_moto_index') }}">Back to list</button>
+
+    <button class="btn btn-secondary btn-edit-modal" data-href="{{ path('app_moto_edit', {'id': moto.id}) }}">Edit</button>
+    
+    {{ include('moto/_delete_form.html.twig') }}
+
+    {# 2. Afegeix el contenidor del Modal al final del block body #}
+    <div class="modal fade" id="motoEditModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content" id="motoEditModalContent">
+            </div>
+        </div>
+    </div>
+
+    {# 3. Script per gestionar l'obertura del modal #}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const modalElement = document.getElementById('motoEditModal');
+            
+            // Comprova si Bootstrap està carregat
+            if (typeof bootstrap === 'undefined') {
+                console.error('Bootstrap no està carregat!');
+                return;
+            }
+            
+            const modal = new bootstrap.Modal(modalElement);
+
+            document.querySelectorAll('.btn-edit-modal').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    const url = this.getAttribute('href') || this.dataset.href || this.getAttribute('data-href');
+                    
+                    fetch(url, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Error en la resposta: ' + response.status);
+                        }
+                        return response.text();
+                    })
+                    .then(html => {
+                        console.log('HTML rebut'); // Debug
+                        document.getElementById('motoEditModalContent').innerHTML = html;
+                        modal.show();
+                    })
+                    .catch(error => {
+                        console.error('Error carregant el formulari:', error);
+                        alert('Error carregant el formulari');
+                    });
+                });
+            });
+
+            // Handler per als buttons que fan navigació a una URL guardada en data-href
+            document.querySelectorAll('.btn-back-to-list').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const url = this.getAttribute('href') || this.dataset.href || this.getAttribute('data-href');
+                    if (!url) return;
+                    window.location.href = url;
+                });
+            });
+        });
+    </script>
+{% endblock %}

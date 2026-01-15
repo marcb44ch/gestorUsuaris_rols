@@ -1,0 +1,19 @@
+# config/serializer/App.Entity.Project.yaml
+App\Entity\Project:
+    attributes:
+        id:
+            groups: ['project:read']
+        nombre:
+            groups: ['project:read', 'project:write']
+        descripcion:
+            groups: ['project:read', 'project:write']
+        fecha_inicio:
+            groups: ['project:read', 'project:write']
+            serialized_name: 'fecha_inicio'
+        fecha_fin:
+            groups: ['project:read', 'project:write']
+            serialized_name: 'fecha_fin'
+        estado:
+            groups: ['project:read', 'project:write']
+        comments:
+            groups: ['project:read', 'project:write']

@@ -1,0 +1,24 @@
+{# templates/user/_edit_content.html.twig #}
+
+{# L'atribut action és important perquè s'enviï a la ruta correcta #}
+<show action="{{ path('app_moto_show', {'id': moto.id}) }}" method="post" id="app_moto_show">
+    
+    <div class="modal-header">
+        <h5 class="modal-title">Moto</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+    
+    <div class="modal-body">
+        {# Renderitzem el formulari que ja tenies #}
+        {{ show_widget(show) }}
+        
+        {# Important: el token CSRF i altres camps ocults #}
+        {{ show_rest(show) }}
+    </div>
+    
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tancar</button>
+        <button type="submit" class="btn btn-primary">Guardar Canvis</button>
+    </div>
+
+</form>

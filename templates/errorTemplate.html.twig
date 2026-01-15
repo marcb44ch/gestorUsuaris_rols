@@ -9,11 +9,6 @@
     <body>
         {# HEADER COMÚ (Nav) #}
         <nav class="navbar navbar-dark bg-dark p-3">
-            {% if is_granted('ROLE_ADMIN') %}
-                <a class="navbar-brand" href="{{ path('app_admin_dashboard') }}">Gestió Projectes</a>
-            {% else %}
-                <a class="navbar-brand" href="{{ path('app_project_index') }}">Gestió Projectes</a>
-            {% endif %}
             <div class="text-white">
                 {% if app.user %}
                     Hola, {{ app.user.email }} | <a href="{{ path('app_logout') }}" class="text-warning">Logout</a>
@@ -25,13 +20,7 @@
 
         <div class="container-fluid">
             <div class="row">
-                {# SIDEBAR (Opcional, es pot sobreescriure) #}
-                {% block sidebar %}{% endblock %}
-
-                {# CONTINGUT PRINCIPAL #}
-                <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 pt-3">
-                    {% block body %}{% endblock %}
-                </main>
+                {% block body %}{% endblock %}
             </div>
         </div>
 
